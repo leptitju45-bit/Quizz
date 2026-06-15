@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz 10 sur 10 - Émission Interactive</title>
+    <style>
+        :root {
+            --bg-color: #F0EBEB;
+            --text-main: #000020;
+            --text-muted: #1e62b2;
+            --accent: #ec2830;
+            --accent-hover: #1e62b2;
+            --card-bg: #ffffff;
+            --border: #000020;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Funnel Display', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 900px;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .screen.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Typography & Layout */
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            color: var(--text-main);
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+        }
+
+        /* Menu Screen */
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .theme-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 3rem 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .theme-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: #cbd5e1;
+        }
+
+        .theme-card h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Difficulty Screen */
+        .difficulty-header {
+            margin-bottom: 2.5rem;
+        }
+        
+        .current-theme-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        .difficulty-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .num-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 2rem;
+            font-weight: 700;
+            padding: 1.5rem 0;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            color: var(--text-main);
+        }
+
+        .num-btn:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            transform: scale(1.05);
+        }
+
+        /* Quiz Screen */
+        .quiz-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 4rem 3rem;
+            box-shadow: var(--shadow-lg);
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            text-align: center;
+        }
+
+        .quiz-meta {
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .question-text {
+            font-size: 2.25rem;
+            font-weight: 700;
+            line-height: 1.3;
+            color: var(--text-main);
+            margin-bottom: 2rem;
+            max-width: 750px;
+        }
+
+        .answer-zone {
+            margin-top: 1rem;
+            min-height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .click-hint {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-style: italic;
+            animation: pulse 2s infinite;
+        }
+
+        .answer-text {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #f4ab2f;
+            display: none;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 0.3s ease;
+        }
+
+        .answer-text.visible {
+            display: block;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Global Back Button */
+        .btn-menu {
+            margin-top: 3rem;
+            background: var(--text-main);
+            color: var(--bg-color);
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .btn-menu.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .btn-menu:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: #1e293b;
+        }
+
+        .back-link {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-block;
+            text-decoration: underline;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        
+        <!-- SCREEN 1: THEME MENU -->
+        <div id="screen-menu" class="screen active">
+            <div style="text-align: center;">
+                <h1>QUIZZ sur 10</h1>
+                <p class="subtitle">Choisissez le thème de l'épreuve</p>
+            </div>
+            <div class="theme-grid">
+                <div class="theme-card" onclick="selectTheme('japon')">
+                    <h2>Entre tradition et modernité</h2>
+                </div>
+                <div class="theme-card" onclick="selectTheme('gastronomie')">
+                    <h2>GOAT de la gastronomie</h2>
+                </div>
+                <div class="theme-card" onclick="selectTheme('jeuxvideo')">
+                    <h2>Askip ça rend violent</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: DIFFICULTY SCALE -->
+        <div id="screen-difficulty" class="screen">
+            <div style="text-align: center;" class="difficulty-header">
+                <p class="current-theme-title" id="diff-theme-title">Thème</p>
+                <h1>Combien tu te mets ?</h1>
+                <p class="subtitle" style="margin-bottom: 1rem;">Évaluez votre niveau de confiance de 1 à 10</p>
+            </div>
+            <div class="difficulty-grid">
+                <button class="num-btn" onclick="selectDifficulty(1)">1</button>
+                <button class="num-btn" onclick="selectDifficulty(2)">2</button>
+                <button class="num-btn" onclick="selectDifficulty(3)">3</button>
+                <button class="num-btn" onclick="selectDifficulty(4)">4</button>
+                <button class="num-btn" onclick="selectDifficulty(5)">5</button>
+                <button class="num-btn" onclick="selectDifficulty(6)">6</button>
+                <button class="num-btn" onclick="selectDifficulty(7)">7</button>
+                <button class="num-btn" onclick="selectDifficulty(8)">8</button>
+                <button class="num-btn" onclick="selectDifficulty(9)">9</button>
+                <button class="num-btn" onclick="selectDifficulty(10)">10</button>
+            </div>
+            <div style="text-align: center;">
+                <span class="back-link" onclick="navigateTo('screen-menu')">Changer de thème</span>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: QUIZ (QUESTION & ANSWER) -->
+        <div id="screen-quiz" class="screen">
+            <div class="quiz-container" id="quiz-box" onclick="revealAnswer()">
+                <div class="quiz-meta" id="quiz-meta-text">JAPON • NIVEAU 5</div>
+                <div class="question-text" id="quiz-question">Chargement de la question...</div>
+                
+                <div class="answer-zone">
+                    <span class="click-hint" id="click-hint">Cliquez n'importe où pour révéler la réponse</span>
+                    <span class="answer-text" id="quiz-answer">Réponse</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <button class="btn-menu" id="btn-return" onclick="resetToMenu()">
+                    ← Retour au Menu Principal
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Quiz Database
+        const quizData = {
+            japon: {
+                title: "Le Japon",
+                questions: [
+                    { q: "Quelle est la capitale actuelle et la plus grande ville du Japon ?", a: "Tokyo" },
+                    { q: "Comment appelle-t-on les bandes dessinées japonaises, qui se lisent généralement de droite à gauche ?", a: "Les mangas" },
+                    { q: "Quel est le nom du plat traditionnel japonais le plus célèbre à l'étranger, composé de riz vinaigré et généralement de poisson cru ?", a: "Le sushi" },
+                    { q: "Quel volcan majestueux, point culminant du pays à 3 776 mètres d'altitude, est le symbole sacré du Japon ?", a: "Le mont Fuji" },
+                    { q: "Comment appelle-t-on ces redoutables guerriers du Japon médiéval qui suivaient un code d'honneur très strict appelé le Bushido ?", a: "Les samouraïs" },
+                    { q: "Quelle fleur, dont la floraison au printemps donne lieu à la tradition nationale du Hanami, est le symbole floral non officiel du Japon ?", a: "La fleur de cerisier / Sakura" },
+                    { q: "Quelle ville japonaise, ancienne capitale impériale du pays pendant plus de mille ans, est célèbre pour ses milliers de temples et ses geishas ?", a: "Kyoto" },
+                    { q: "Quel grand réalisateur de films d'animation est le cofondateur du Studio Ghibli et le créateur de chefs-d'œuvre comme Le Voyage de Chihiro ou Mon Voisin Totoro ?", a: "Hayao Miyazaki" },
+                    { q: "Dans la religion autochtone du Japon, le Shintoïsme, comment appelle-t-on ces grands portails traditionnels en bois, le plus souvent peints en rouge, qui marquent l'entrée d'un espace sacré ?", a: "Un torii" },
+                    { q: "Quelle période historique majeure du Japon (qui s'étend de 1603 à 1867) correspond à l'époque où le pays était totalement fermé aux étrangers et gouverné par les shoguns de la dynastie Tokugawa ?", a: "L'époque d'Edo" }
+                ]
+            },
+            gastronomie: {
+                title: "Gastronomie Française",
+                questions: [
+                    { q: "Quel fromage en forme de disque, originaire de Normandie, a une boîte en bois et une croûte fleurie blanche ?", a: "Le Camembert" },
+                    { q: "Quelle viennoiserie feuilletée est le symbole du petit-déjeuner français ?", a: "Le croissant" },
+                    { q: "Quelle spécialité de Bourgogne consiste à cuire des morceaux de bœuf dans du vin rouge avec des champignons et des lardons ?", a: "Le bœuf bourguignon" },
+                    { q: "Quel gâteau traditionnel bordelais, croustillant à l'extérieur et moelleux à l'intérieur, est parfumé au rhum et à la vanille ?", a: "Le canelé" },
+                    { q: "Quelle région française est historiquement et géographiquement associée à la choucroute ?", a: "L'Alsace" },
+                    { q: "Quel nom donne-t-on à la sauce blanche obtenue en mélangeant un roux (beurre et farine) et du lait ?", a: "La sauce béchamel" },
+                    { q: "Dans quelle ville du Sud de la France a été inventée la bouillabaisse, cette célèbre soupe de poissons ?", a: "Marseille" },
+                    { q: "Quelle est la différence majeure entre une galette de sarrasin bretonne et une crêpe traditionnelle ?", a: "La galette utilise de la farine de blé noir (sarrasin) et de l'eau (sans lait ni œufs dans la base traditionnelle)" },
+                    { q: "Quel grand chef cuisinier français, décédé en 2018, détenit le record absolu de 32 étoiles au Guide Michelin au cours de sa carrière ?", a: "Joël Robuchon" },
+                    { q: "Quel est l'ingrédient principal ou la base végétale spécifique qui compose la sauce 'Chantilly' lorsqu'elle est salée et appelée 'Sauce Mousseline de légumes' ?", a: "Une purée de légumes détendue au beurre blanc" }
+                ]
+            },
+            jeuxvideo: {
+                title: "Jeux Vidéo",
+                questions: [
+                    { q: "Quel est le métier d'origine du célèbre personnage Mario de Nintendo ?", a: "Plombier" },
+                    { q: "Dans quel jeu de construction mondialement connu évolue-t-on dans un monde fait entièrement de cubes ?", a: "Minecraft" },
+                    { q: "Quel est le nom du hérisson bleu ultra-rapide qui sert de mascotte à la marque Sega ?", a: "Sonic" },
+                    { q: "Quel genre de jeu vidéo désigne le sigle 'FPS' ?", a: "First-Person Shooter / Jeu de tir à la première personne" },
+                    { q: "Quel jeu de tir d'Electronic Arts, connu pour ses cartes géantes et ses véhicules, a sorti son opus '2042' ?", a: "Battlefield" },
+                    { q: "Dans quel MMORPG gratuit et orienté 'sandbox' l'économie est-elle entièrement gérée par les joueurs dans le monde d'Albion ?", a: "Albion Online" },
+                    { q: "Comment appelle-t-on le créateur japonais indépendant derrière les sagas Metal Gear Solid et Death Stranding ?", a: "Hideo Kojima" },
+                    { q: "Dans le jeu poétique Sky: Children of the Light, quel studio de développement est à l'origine du projet ?", a: "Thatgamecompany" },
+                    { q: "Quel était le nom du projet de console de salon de Nintendo qui a finalement été commercialisée sous le nom de 'Nintendo GameCube' ?", a: "Le Projet Dolphin" },
+                    { q: "Dans l'histoire du jeu vidéo compétitif, quel joueur détient le record du monde du plus grand nombre de titres de champion du monde remportés sur le jeu StarCraft II ?", a: "Joona 'Serral' Sotala" }
+                ]
+            }
+        };
+
+        // State Management
+        let currentTheme = '';
+        let currentDifficulty = 0;
+        let isAnswerRevealed = false;
+
+        function navigateTo(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            // Show target screen
+            setTimeout(() => {
+                const target = document.getElementById(screenId);
+                target.classList.add('active');
+            }, 50);
+        }
+
+        function selectTheme(themeKey) {
+            currentTheme = themeKey;
+            document.getElementById('diff-theme-title').innerText = quizData[themeKey].title;
+            navigateTo('screen-difficulty');
+        }
+
+        function selectDifficulty(level) {
+            currentDifficulty = level;
+            isAnswerRevealed = false;
+            
+            // Set up quiz screen content
+            const themeInfo = quizData[currentTheme];
+            const pair = themeInfo.questions[level - 1];
+            
+            document.getElementById('quiz-meta-text').innerText = `${themeInfo.title} • Niveau ${level}`;
+            document.getElementById('quiz-question').innerText = pair.q;
+            document.getElementById('quiz-answer').innerText = pair.a;
+            
+            // Reset visibility states
+            document.getElementById('quiz-answer').classList.remove('visible');
+            document.getElementById('click-hint').style.display = 'block';
+            document.getElementById('btn-return').classList.remove('visible');
+            
+            navigateTo('screen-quiz');
+        }
+
+        function revealAnswer() {
+            if (!isAnswerRevealed) {
+                isAnswerRevealed = true;
+                document.getElementById('click-hint').style.display = 'none';
+                document.getElementById('quiz-answer').classList.add('visible');
+                document.getElementById('btn-return').classList.add('visible');
+            }
+        }
+
+        function resetToMenu() {
+            navigateTo('screen-menu');
+        }
+    </script>
+</body>
+</html>
